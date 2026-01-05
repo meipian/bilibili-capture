@@ -1,0 +1,16 @@
+{
+  "cookie": "your_bilibili_cookie_here",
+  "target_up_id": "",
+  "favorite_list_id": "",
+  "start_year": "2026",
+  "start_month": "1",
+  "start_day": "1",
+  "end_year": "2026",
+  "end_month": "12",
+  "end_day": "31",
+  "max_qps": 4,
+  "concurrent_limit": 5,
+  "output_dir": "./output/",
+  "image_format": "webp",
+  "debug_mode": true
+}
