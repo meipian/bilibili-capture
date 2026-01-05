@@ -6,10 +6,10 @@ TARGET_UP_ID = ""     # 目标UP主编号
 FAVORITE_LIST_ID = ""  # 合集编号（可选）
 
 # 时间范围过滤
-START_YEAR = "2023"  # 开始年份
+START_YEAR = "2026"  # 开始年份
 START_MONTH = "1"    # 开始月份
 START_DAY = "1"      # 开始日期
-END_YEAR = "2023"    # 结束年份
+END_YEAR = "2026"    # 结束年份
 END_MONTH = "12"     # 结束月份
 END_DAY = "31"       # 结束日期
 
@@ -22,8 +22,7 @@ MIN_VIDEO_DURATION = 10  # 最小视频时长（秒），低于此值的视频�
 
 # 输出配置
 OUTPUT_DIR = "./output/"  # 输出目录
-IMAGE_FORMAT = "webp"  # 输出图片格式，支持webp、jpg、png
-MAX_IMAGE_SIZE = (1920, 1080)  # 输出图片最大尺寸
+IMAGE_FORMAT = "webp"  # 输出图片格式，当前支持webp
 
 # 调试配置
 DEBUG_MODE = True  # 是否启用调试模式

@@ -182,7 +182,7 @@ class VideoIndexer:
         # 检查Cookie是否设置
         if not self.headers['Cookie'] or self.headers['Cookie'] == "":
             logger.error("Cookie未设置，请在配置中填入有效的Cookie")
-            return []
+            return []  # Cookie未设置，返回空列表（这表示没有视频，而不是错误）
         
         all_videos = []
         page = 1
@@ -194,8 +194,8 @@ class VideoIndexer:
                 mixin_key = await self.get_mixin_key(session)
             except Exception as e:
                 logger.error(f"无法获取WBI密钥，可能是因为Cookie无效: {e}")
-                return []
-            
+                return None  # 返回None表示错误
+                
             while True:
                 if max_pages and page > max_pages:
                     break
@@ -234,16 +234,16 @@ class VideoIndexer:
                     
                     if data['code'] == -101:  # 账号未登录
                         logger.error("API请求失败: 账号未登录，请检查Cookie是否有效")
-                        break
+                        return None  # 返回None表示错误
                     elif data['code'] == -352:  # 风控校验失败
                         logger.error("API请求失败: 风控校验失败，请降低请求频率或检查Cookie")
-                        break
+                        return None  # 返回None表示错误
                     elif data['code'] == -3:  # API签名错误
                         logger.error("API请求失败: API签名错误，请检查WBI算法")
-                        break
+                        return None  # 返回None表示错误
                     elif data['code'] != 0:
                         logger.error(f"API请求失败: {data['message']}")
-                        break
+                        return None  # 返回None表示错误
                     
                     videos_info = data['data']['list']['vlist']
                     

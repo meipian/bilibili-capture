@@ -39,6 +39,9 @@ class BilibiliCaptureUI:
         self.root.title("Bilibili视频内容多点采样缩略图提取系统")
         self.root.geometry("800x700")
         
+        # 添加停止标志
+        self.stop_flag = threading.Event()
+        
         # 加载用户配置
         user_config = load_user_config()
         
@@ -146,7 +149,7 @@ class BilibiliCaptureUI:
         
         # 图片格式选择
         ttk.Label(config_frame, text="图片格式:").grid(row=9, column=0, sticky=tk.W, pady=2)
-        format_combo = ttk.Combobox(config_frame, textvariable=self.config['image_format'], values=["webp", "jpg", "png"], width=10)
+        format_combo = ttk.Combobox(config_frame, textvariable=self.config['image_format'], values=["webp"], width=10, state="readonly")
         format_combo.grid(row=9, column=1, sticky=tk.W, pady=2)
         
         # 调试模式
@@ -212,6 +215,9 @@ class BilibiliCaptureUI:
         self.start_button.config(state=tk.DISABLED)
         self.stop_button.config(state=tk.NORMAL)
         
+        # 清除停止标志
+        self.stop_flag.clear()
+        
         # 启动提取任务
         def run_async():
             asyncio.run(self._run_capture_async())
@@ -221,8 +227,12 @@ class BilibiliCaptureUI:
         self.capture_thread.start()
         
     def stop_capture(self):
-        # 这里可以添加停止逻辑
-        self.log_message("停止请求...")
+        # 设置停止标志
+        self.stop_flag.set()
+        self.log_message("停止请求已发送...")
+        # 禁用停止按钮，启用开始按钮将在任务完成后进行
+        self.stop_button.config(state=tk.DISABLED)
+        self.start_button.config(state=tk.NORMAL)
         
     def update_config_from_ui(self):
         # 更新全局配置
@@ -245,45 +255,6 @@ class BilibiliCaptureUI:
         OUTPUT_DIR = self.config['output_dir'].get()
         IMAGE_FORMAT = self.config['image_format'].get()
         DEBUG_MODE = self.config['debug_mode'].get()
-        
-    def start_capture(self):
-        # 更新配置
-        self.update_config_from_ui()
-        
-        # 保存配置
-        current_config = {
-            'cookie': self.config['cookie'].get(),
-            'target_up_id': self.config['target_up_id'].get(),
-            'favorite_list_id': self.config['favorite_list_id'].get(),
-            'start_year': self.config['start_year'].get(),
-            'start_month': self.config['start_month'].get(),
-            'start_day': self.config['start_day'].get(),
-            'end_year': self.config['end_year'].get(),
-            'end_month': self.config['end_month'].get(),
-            'end_day': self.config['end_day'].get(),
-            'max_qps': self.config['max_qps'].get(),
-            'concurrent_limit': self.config['concurrent_limit'].get(),
-            'output_dir': self.config['output_dir'].get(),
-            'image_format': self.config['image_format'].get(),
-            'debug_mode': self.config['debug_mode'].get()
-        }
-        save_user_config(current_config)
-        
-        # 禁用开始按钮，启用停止按钮
-        self.start_button.config(state=tk.DISABLED)
-        self.stop_button.config(state=tk.NORMAL)
-        
-        # 启动提取任务
-        def run_async():
-            asyncio.run(self._run_capture_async())
-        
-        self.capture_thread = threading.Thread(target=run_async)
-        self.capture_thread.daemon = True
-        self.capture_thread.start()
-        
-    def stop_capture(self):
-        # 这里可以添加停止逻辑
-        self.log_message("停止请求...")
         
     async def _run_capture_async(self):
         try:
@@ -324,21 +295,45 @@ class BilibiliCaptureUI:
                 # 执行提取流程
                 self.log_message(f"开始获取UP主 {self.config['target_up_id'].get()} 的视频列表...")
                 
-                # 获取视频列表
+                # 构建时间字符串和时间对象
                 from datetime import datetime
                 start_dt = datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S")
                 end_dt = datetime.strptime(end_time_str, "%Y-%m-%d %H:%M:%S")
                 
-                video_list = await indexer.get_videos_by_up_id(
-                    up_id=self.config['target_up_id'].get(),
-                    start_time=start_dt,
-                    end_time=end_dt
-                )
+                # 检查停止标志
+                if self.stop_flag.is_set():
+                    self.log_message("任务已取消，停止获取视频列表")
+                    return
+                
+                # 获取视频列表（带重试机制）
+                video_list = None
+                for attempt in range(2):  # 最多重试一次
+                    video_list = await indexer.get_videos_by_up_id(
+                        up_id=self.config['target_up_id'].get(),
+                        start_time=start_dt,
+                        end_time=end_dt
+                    )
+                    
+                    # 如果获取成功，跳出重试循环
+                    if video_list is not None:
+                        break
+                    
+                    if attempt == 0:  # 第一次失败，进行重试
+                        self.log_message("获取视频列表失败，正在重试...")
+                        await asyncio.sleep(2)  # 等待2秒再重试
+                    else:  # 重试也失败
+                        self.log_message("获取视频列表失败，请检查Cookie或其他配置")
+                        return
                 
                 self.log_message(f"获取到 {len(video_list)} 个视频")
                 
                 # 遍历视频列表
-                for video in video_list:
+                for idx, video in enumerate(video_list):
+                    # 检查停止标志
+                    if self.stop_flag.is_set():
+                        self.log_message("任务已取消，停止处理视频")
+                        return
+                        
                     self.log_message(f"处理视频: {video['bvid']} - {video['title']}")
                     
                     # 计算采样点
@@ -346,18 +341,34 @@ class BilibiliCaptureUI:
                     self.log_message(f"计算出 {len(sample_times)} 个采样点: {sample_times}")
                     
                     # 提取缩略图
-                    for idx, sample_time in enumerate(sample_times):
+                    for sample_idx, sample_time in enumerate(sample_times):
+                        # 检查停止标志
+                        if self.stop_flag.is_set():
+                            self.log_message("任务已取消，停止提取缩略图")
+                            return
+                            
                         try:
                             # 生成输出文件名
                             output_filename = f"{video['bvid']}_{int(sample_time)}.{self.config['image_format'].get()}"
                             output_path = os.path.join(self.config['output_dir'].get(), output_filename)
                             
-                            # 提取缩略图
-                            success = await extractor.extract_thumbnail_at_time(
-                                bvid=video['bvid'],
-                                time_in_seconds=sample_time,
-                                output_path=output_path
-                            )
+                            # 提取缩略图（带重试机制）
+                            success = False
+                            for attempt in range(2):  # 最多重试一次
+                                success = await extractor.extract_thumbnail_at_time(
+                                    bvid=video['bvid'],
+                                    time_in_seconds=sample_time,
+                                    output_path=output_path
+                                )
+                                
+                                if success:
+                                    break
+                                
+                                if attempt == 0:  # 第一次失败，进行重试
+                                    self.log_message(f"提取缩略图失败，正在重试: {output_filename}")
+                                    await asyncio.sleep(1)  # 等待1秒再重试
+                                else:  # 重试也失败
+                                    self.log_message(f"提取缩略图失败，请检查Cookie或其他配置: {output_filename}")
                             
                             if success:
                                 self.log_message(f"成功提取缩略图: {output_filename}")
