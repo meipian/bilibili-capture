@@ -18,16 +18,20 @@ pip install -r requirements.txt
 2. 获取Cookie：
    可通过插件（如`Cookie-Editor`获取）
    示例：
+   
    <img width="637" height="668" alt="image" src="https://github.com/user-attachments/assets/5dd4ce50-82f2-4d46-9dd8-8ad2a55b3d01" />
 
 4. 获取up主编号和合集编号：
    示例：
       1. 打开视频合集
+         
       <img width="1620" height="454" alt="image" src="https://github.com/user-attachments/assets/fc4e8004-fe7f-45cb-9c91-e9ab44360519" />
+      
       2. 第一项为**up主编号**，第二项为**合集编号**
+         
       <img width="1047" height="248" alt="image" src="https://github.com/user-attachments/assets/6982694a-9633-49d9-a7ac-dd642974af11" />
 
-6. 填入UI配置中
+5. 填入UI配置中
 
 ## 安全说明
 
