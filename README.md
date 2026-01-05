@@ -1,6 +1,7 @@
 # Bilibili 视频合集（/直播回放）快速预览
 
 一个自动化的Bilibili视频缩略图获取工具，通过提取视频缩略图，实现对特定UP主视频集合的快速预览，支持自定义时间范围过滤及动态采样率。
+注：缩略图清晰度较低。
 
 ## 安装依赖
 
@@ -27,7 +28,7 @@ pip install -r requirements.txt
          
       <img width="1620" height="454" alt="image" src="https://github.com/user-attachments/assets/fc4e8004-fe7f-45cb-9c91-e9ab44360519" />
       
-      2. 第一项为**up主编号**，第二项为**合集编号**
+      2. 第一项为**up主编号**，第二项为**合集编号**（编号为**纯数字**）
          
       <img width="1047" height="248" alt="image" src="https://github.com/user-attachments/assets/6982694a-9633-49d9-a7ac-dd642974af11" />
 
@@ -35,7 +36,7 @@ pip install -r requirements.txt
 
 ## 安全说明
 
-- 项目会自动保存配置到 `user_config.json` 文件中
+- 配置会自动保存到 `user_config.json` 文件中
 - 请妥善保管个人Cookie信息，避免泄露
 
 ## 项目结构
