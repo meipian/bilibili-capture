@@ -1,4 +1,4 @@
-<img width="1047" height="248" alt="image" src="https://github.com/user-attachments/assets/6b2581d1-23a1-475d-8082-b7c90187ad7c" /># Bilibili 视频合集（/直播回放）快速预览
+# Bilibili 视频合集（/直播回放）快速预览
 
 一个自动化的Bilibili视频缩略图获取工具，通过提取视频缩略图，实现对特定UP主视频集合的快速预览，支持自定义时间范围过滤及动态采样率。
 
