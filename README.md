@@ -1,4 +1,4 @@
-# Bilibili 提取缩略图实现视频内容快速预览
+<img width="1047" height="248" alt="image" src="https://github.com/user-attachments/assets/6b2581d1-23a1-475d-8082-b7c90187ad7c" /># Bilibili 视频合集（/直播回放）快速预览
 
 一个自动化的Bilibili视频缩略图获取工具，通过提取视频缩略图，实现对特定UP主视频集合的快速预览，支持自定义时间范围过滤及动态采样率。
 
@@ -15,16 +15,19 @@ pip install -r requirements.txt
    python main.py
    ```
 
-2. 在UI界面中填写配置信息：
-   - Cookie：Bilibili登录Cookie（重要：需要从浏览器获取自己的Cookie）
-   - UP主编号：目标UP主的ID
-   - 合集编号：视频合集ID（可选）
-   - 时间范围：选择开始和结束时间
-   - 其他配置：QPS、并发限制、输出目录等
+2. 获取Cookie：
+   可通过插件（如`Cookie-Editor`获取）
+   示例：
+   <img width="637" height="668" alt="image" src="https://github.com/user-attachments/assets/5dd4ce50-82f2-4d46-9dd8-8ad2a55b3d01" />
 
-3. 点击"开始提取"按钮启动提取任务
+4. 获取up主编号和合集编号：
+   示例：
+      1. 打开视频合集
+      <img width="1620" height="454" alt="image" src="https://github.com/user-attachments/assets/fc4e8004-fe7f-45cb-9c91-e9ab44360519" />
+      2. 第一项为**up主编号**，第二项为**合集编号**
+      <img width="1047" height="248" alt="image" src="https://github.com/user-attachments/assets/6982694a-9633-49d9-a7ac-dd642974af11" />
 
-4. 在日志区域查看详细的处理信息
+6. 填入UI配置中
 
 ## 安全说明
 
@@ -34,7 +37,7 @@ pip install -r requirements.txt
 ## 项目结构
 
 ```
-bb-capture/
+bilibili-capture/
 ├── main.py                 # 主程序入口，包含UI界面
 ├── config.py               # 配置文件
 ├── config_manager.py       # 配置保存和加载管理器
