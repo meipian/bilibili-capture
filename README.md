@@ -5,7 +5,7 @@
 
 ## 界面展示
 
-<img width="701" height="336" alt="image" src="https://github.com/user-attachments/assets/48d673dc-15c7-41e7-b429-936c3adc0cfb" />
+<img width="866" height="399" alt="image" src="https://github.com/user-attachments/assets/dda59751-ed57-40cb-9ed1-84b0a5a5ab0c" />
 
 ## 安装依赖
 
