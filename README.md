@@ -24,7 +24,8 @@ pip install -r requirements.txt
    可通过插件（如`Cookie-Editor`获取）
    示例：
    
- 
+ <img width="624" height="667" alt="image" src="https://github.com/user-attachments/assets/f3b76413-08ad-4818-acb9-99e5ac3b49ec" />
+
 
 3. 获取合集链接：
    以**直播回放**为例
