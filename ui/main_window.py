@@ -132,7 +132,7 @@ class BilibiliCaptureUI:
         config_frame.grid(row=0, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=5)
 
         # URL输入
-        ttk.Label(config_frame, text="视频链接:").grid(row=0, column=0, sticky=tk.W, pady=2)
+        ttk.Label(config_frame, text="合集链接:").grid(row=0, column=0, sticky=tk.W, pady=2)
         url_entry = tk.Entry(config_frame, textvariable=self.config['url'], width=80)
         url_entry.grid(row=0, column=1, columnspan=4, sticky=(tk.W, tk.E), pady=2)
         url_entry.bind('<FocusOut>', self.on_url_focus_out)
