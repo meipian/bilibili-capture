@@ -33,10 +33,7 @@ class SamplingEngine:
         
         # 计算采样时间点，避开片头片尾
         # 公式: ti = T / (N+1) * i
-        sample_times = []
-        for i in range(1, n + 1):
-            sample_time = duration / (n + 1) * i
-            sample_times.append(sample_time)
+        sample_times = [duration / (n + 1) * i for i in range(1, n + 1)]
         
         logger.info(f"采样时间点: {sample_times}")
         return sample_times

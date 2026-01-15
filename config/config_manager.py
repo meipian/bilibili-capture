@@ -18,9 +18,8 @@ def load_user_config():
     if not os.path.exists(CONFIG_FILE):
         # 如果配置文件不存在，返回默认值
         return {
+            'url': '',
             'cookie': BILIBILI_COOKIE,
-            'target_up_id': TARGET_UP_ID,
-            'favorite_list_id': FAVORITE_LIST_ID,
             'start_year': START_YEAR,
             'start_month': START_MONTH,
             'start_day': START_DAY,
@@ -30,20 +29,33 @@ def load_user_config():
             'max_qps': MAX_QPS,
             'concurrent_limit': CONCURRENT_LIMIT,
             'output_dir': OUTPUT_DIR,
-            'image_format': IMAGE_FORMAT,
-            'debug_mode': DEBUG_MODE
+            'image_format': IMAGE_FORMAT
         }
-    
+
     try:
         with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            config = json.load(f)
+            # 兼容旧配置文件，如果存在target_up_id和favorite_list_id，迁移到url
+            if 'target_up_id' in config or 'favorite_list_id' in config:
+                # 尝试从旧配置构建url
+                if 'url' not in config or not config['url']:
+                    up_id = config.get('target_up_id', '')
+                    list_id = config.get('favorite_list_id', '')
+                    if up_id:
+                        if list_id:
+                            config['url'] = f'https://space.bilibili.com/{up_id}/lists/{list_id}'
+                        else:
+                            config['url'] = f'https://space.bilibili.com/{up_id}'
+                # 删除旧字段
+                config.pop('target_up_id', None)
+                config.pop('favorite_list_id', None)
+            return config
     except Exception as e:
         print(f"加载配置时出错: {e}")
         # 出错时返回默认值
         return {
+            'url': '',
             'cookie': BILIBILI_COOKIE,
-            'target_up_id': TARGET_UP_ID,
-            'favorite_list_id': FAVORITE_LIST_ID,
             'start_year': START_YEAR,
             'start_month': START_MONTH,
             'start_day': START_DAY,
@@ -53,6 +65,5 @@ def load_user_config():
             'max_qps': MAX_QPS,
             'concurrent_limit': CONCURRENT_LIMIT,
             'output_dir': OUTPUT_DIR,
-            'image_format': IMAGE_FORMAT,
-            'debug_mode': DEBUG_MODE
+            'image_format': IMAGE_FORMAT
         }

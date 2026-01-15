@@ -121,3 +121,11 @@ user_config.json
 
 # Output directory for the tool
 output/
+
+# Project notes
+mynote.txt
+
+# Style cache
+*.pyc
+__pycache__/
+*/__pycache__

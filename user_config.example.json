@@ -1,7 +1,6 @@
 {
+  "url": "",
   "cookie": "your_bilibili_cookie_here",
-  "target_up_id": "",
-  "favorite_list_id": "",
   "start_year": "2026",
   "start_month": "1",
   "start_day": "1",
@@ -11,6 +10,5 @@
   "max_qps": 4,
   "concurrent_limit": 5,
   "output_dir": "./output/",
-  "image_format": "webp",
-  "debug_mode": true
+  "image_format": "webp"
 }

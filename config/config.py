@@ -2,8 +2,6 @@
 
 # Bilibili API相关配置
 BILIBILI_COOKIE = ""  # 用户的Cookie，用于访问需要登录的接口
-TARGET_UP_ID = ""     # 目标UP主编号
-FAVORITE_LIST_ID = ""  # 合集编号（可选）
 
 # 时间范围过滤
 START_YEAR = "2026"  # 开始年份
@@ -25,5 +23,4 @@ OUTPUT_DIR = "./output/"  # 输出目录
 IMAGE_FORMAT = "webp"  # 输出图片格式，当前支持webp
 
 # 调试配置
-DEBUG_MODE = True  # 是否启用调试模式
 LOG_LEVEL = "INFO"  # 日志级别：DEBUG, INFO, WARNING, ERROR

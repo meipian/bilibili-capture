@@ -300,6 +300,161 @@ class VideoIndexer:
         logger.info(f"总共获取到 {len(all_videos)} 个符合条件的视频")
         return all_videos
 
+    async def get_videos_by_collection(self, up_id, collection_id, start_time=None, end_time=None):
+        """
+        根据UP主ID和合集ID获取视频合集列表
+
+        :param up_id: UP主ID
+        :param collection_id: 合集ID
+        :param start_time: 开始时间过滤
+        :param end_time: 结束时间过滤
+        :return: 视频列表
+        """
+        if not up_id or not collection_id:
+            raise ValueError("UP主ID和合集ID不能为空")
+
+        logger.info(f"开始获取UP主 {up_id} 的合集 {collection_id} 的视频列表")
+        logger.info(f"时间范围: {start_time} 到 {end_time}")
+
+        # 检查Cookie是否设置
+        if not self.headers['Cookie'] or self.headers['Cookie'] == "":
+            logger.error("Cookie未设置，请在配置中填入有效的Cookie")
+            return []
+
+        all_videos = []
+        page = 1
+        consecutive_empty_pages = 0  # 连续空页面计数器
+        MAX_EMPTY_PAGES = 1  # 最多允许连续1页没有符合条件的视频（合集按时间排序）
+
+        # 创建session
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            while True:
+                # 计算WBI签名参数
+                # 视频合集使用series_id，不需要WBI签名
+                params = {
+                    'mid': up_id,
+                    'series_id': collection_id,
+                    'pn': page,
+                    'ps': 30
+                }
+
+                logger.info(f"请求参数: {params}")
+
+                # 限制频率并请求
+                await self.limiter.acquire()
+
+                try:
+                    logger.info(f"正在获取第 {page} 页合集视频列表...")
+
+                    # 视频合集API（不需要WBI签名）
+                    api_url = 'https://api.bilibili.com/x/series/archives'
+                    logger.info(f"请求URL: {api_url}?{urllib.parse.urlencode(params)}")
+
+                    resp = await session.get(api_url, params=params)
+                    logger.info(f"API响应状态: {resp.status}")
+
+                    # 检查响应状态
+                    if resp.status != 200:
+                        logger.error(f"API请求失败，状态码: {resp.status}")
+                        return None
+
+                    data = await resp.json()
+                    logger.debug(f"API响应数据: {data}")
+
+                    if data['code'] == -101:
+                        logger.error("API请求失败: 账号未登录，请检查Cookie是否有效")
+                        return None
+                    elif data['code'] == -352:
+                        logger.error("API请求失败: 风控校验失败，请降低请求频率或检查Cookie")
+                        return None
+                    elif data['code'] != 0:
+                        logger.error(f"API请求失败: {data['message']}")
+                        return None
+
+                    # 合集API的数据结构不同
+                    if 'data' not in data or 'archives' not in data['data']:
+                        logger.info("没有更多视频了")
+                        break
+
+                    videos_info = data['data']['archives']
+
+                    if not videos_info:
+                        logger.info("没有更多视频了")
+                        break
+
+                    logger.info(f"第 {page} 页获取到 {len(videos_info)} 个视频")
+
+                    # 记录这一页添加了多少视频
+                    videos_added_this_page = 0
+
+                    # 合集列表按收藏顺序排列，不是按发布时间排列，所以不能使用Early Exit
+                    # 需要遍历所有视频并检查时间范围
+                    for video in videos_info:
+                        # 合集API使用pubdate字段（秒级时间戳）
+                        video_timestamp = video.get('pubdate')
+
+                        if not video_timestamp:
+                            logger.error(f"视频数据中没有时间戳字段: {video.keys()}")
+                            continue
+
+                        video_datetime = datetime.fromtimestamp(video_timestamp)
+
+                        logger.info(f"视频: {video['bvid']}, 发布时间: {video_datetime}, 标题: {video['title']}")
+
+                        # 检查是否在时间范围内
+                        in_time_range = True
+                        if start_time and video_datetime < start_time:
+                            logger.info(f"  -> 过滤: 发布时间 {video_datetime} 早于开始时间 {start_time}")
+                            in_time_range = False
+                        if end_time and video_datetime > end_time:
+                            logger.info(f"  -> 过滤: 发布时间 {video_datetime} 晚于结束时间 {end_time}")
+                            in_time_range = False
+
+                        if in_time_range:
+                            # 合集API中的duration是秒数，不是字符串
+                            duration_seconds = video['duration']
+                            # 将秒数转换为分:秒格式
+                            minutes = duration_seconds // 60
+                            seconds = duration_seconds % 60
+                            duration_str = f"{minutes}:{seconds:02d}"
+
+                            all_videos.append({
+                                'bvid': video['bvid'],
+                                'title': video['title'],
+                                'duration': duration_str,
+                                'created': video_timestamp,
+                                'created_str': video_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+                                'play': video['stat']['view'],
+                                'video_url': f"https://www.bilibili.com/video/{video['bvid']}"
+                            })
+                            logger.info(f"  -> 添加到列表")
+                            videos_added_this_page += 1
+
+                    # 检查这一页是否有符合条件的视频
+                    if videos_added_this_page == 0:
+                        consecutive_empty_pages += 1
+                        logger.info(f"本页没有符合条件的视频，连续空页面数: {consecutive_empty_pages}/{MAX_EMPTY_PAGES}")
+                        if consecutive_empty_pages >= MAX_EMPTY_PAGES:
+                            logger.info(f"连续{MAX_EMPTY_PAGES}页没有符合条件的视频，停止获取")
+                            break
+                    else:
+                        consecutive_empty_pages = 0  # 重置计数器
+
+                    logger.info(f"累计 {len(all_videos)} 个符合条件的视频")
+                    page += 1
+
+                    # 增加延时以避免触发风控
+                    await asyncio.sleep(3.0)
+
+                except Exception as e:
+                    logger.error(f"获取第 {page} 页合集视频列表时出错: {e}")
+                    import traceback
+                    logger.error(f"详细错误信息: {traceback.format_exc()}")
+                    break
+
+        logger.info(f"总共获取到 {len(all_videos)} 个符合条件的视频")
+        return all_videos
+
     async def get_cid_by_bvid(self, session, bvid):
         """
         通过BVID获取CID
